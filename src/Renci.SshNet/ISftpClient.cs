@@ -694,6 +694,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="path">The path.</param>
         /// <param name="listCallback">The list callback.</param>
+        /// <param name="maxFiles">Optional limit on the maximum number of files returned. Useful when there are too many files on remote for a single call</param>
         /// <returns>
         /// A list of files.
         /// </returns>
@@ -702,7 +703,7 @@ namespace Renci.SshNet
         /// <exception cref="SftpPermissionDeniedException">Permission to list the contents of the directory was denied by the remote host. <para>-or-</para> A SSH command was denied by the server.</exception>
         /// <exception cref="SshException">A SSH error where <see cref="Exception.Message" /> is the message from the remote host.</exception>
         /// <exception cref="ObjectDisposedException">The method was called after the client was disposed.</exception>
-        IEnumerable<ISftpFile> ListDirectory(string path, Action<int> listCallback = null);
+        IEnumerable<ISftpFile> ListDirectory(string path, Action<int> listCallback = null, int maxFiles = -1);
 
 #if FEATURE_TAP
 

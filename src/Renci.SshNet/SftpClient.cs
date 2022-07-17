@@ -93,7 +93,7 @@ namespace Renci.SshNet
         /// SSH_FXP_DATA protocol fields.
         /// </para>
         /// <para>
-        /// The size of the each indivual SSH_FXP_DATA message is limited to the
+        /// The size of the each individual SSH_FXP_DATA message is limited to the
         /// local maximum packet size of the channel, which is set to <c>64 KB</c>
         /// for SSH.NET. However, the peer can limit this even further.
         /// </para>
@@ -521,6 +521,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="path">The path.</param>
         /// <param name="listCallback">The list callback.</param>
+        /// <param name="maxFiles">Optional limit on the maximum number of files returned</param>
         /// <returns>
         /// A list of files.
         /// </returns>
@@ -529,11 +530,11 @@ namespace Renci.SshNet
         /// <exception cref="SftpPermissionDeniedException">Permission to list the contents of the directory was denied by the remote host. <para>-or-</para> A SSH command was denied by the server.</exception>
         /// <exception cref="SshException">A SSH error where <see cref="Exception.Message" /> is the message from the remote host.</exception>
         /// <exception cref="ObjectDisposedException">The method was called after the client was disposed.</exception>
-        public IEnumerable<ISftpFile> ListDirectory(string path, Action<int> listCallback = null)
+        public IEnumerable<ISftpFile> ListDirectory(string path, Action<int> listCallback = null, int maxFiles = -1)
         {
             CheckDisposed();
 
-            return InternalListDirectory(path, listCallback);
+            return InternalListDirectory(path, listCallback, maxFiles);
         }
 
 #if FEATURE_TAP
@@ -2156,12 +2157,13 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="path">The path.</param>
         /// <param name="listCallback">The list callback.</param>
+        /// <param name="maxFiles">An optional limit on the number of files returned. Method will return early when this number is exceeded</param>
         /// <returns>
-        /// A list of files in the specfied directory.
+        /// A list of files in the specified directory. 
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="path" /> is <b>null</b>.</exception>
         /// <exception cref="SshConnectionException">Client not connected.</exception>
-        private IEnumerable<ISftpFile> InternalListDirectory(string path, Action<int> listCallback)
+        private IEnumerable<ISftpFile> InternalListDirectory(string path, Action<int> listCallback, int maxFiles = -1)
         {
             if (path == null)
                 throw new ArgumentNullException("path");
@@ -2197,6 +2199,10 @@ namespace Renci.SshNet
                 {
                     //  Execute callback on different thread
                     ThreadAbstraction.ExecuteThread(() => listCallback(result.Count));
+                }
+
+                if(maxFiles > 0 && result.Count > maxFiles) {
+                    break;
                 }
 
                 files = _sftpSession.RequestReadDir(handle);
